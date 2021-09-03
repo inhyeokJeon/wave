@@ -185,6 +185,12 @@ class LayerNormalization(keras.layers.Layer):
         return input_mask
 
     def build(self, input_shape):
+        '''
+        두개의 훈련가능한 가중치 gamma와 beta 값을 정의한다.
+        두 가중치 모두 크기가 input_shape[-1:] 이고
+        데이터 타입은 tf.float32이고
+        gamma는 1 beta는 0으로 초기화 한다.
+        '''
         self.input_spec = InputSpec(shape=input_shape)
         shape = input_shape[-1:]
         if self.scale:
@@ -202,6 +208,10 @@ class LayerNormalization(keras.layers.Layer):
         super(LayerNormalization, self).build(input_shape)
 
     def call(self, inputs, training=None):
+        '''
+        레이어의 논리 핵심이 되는 메서드.
+        :return: 펑균값과 분산, 표준편차를 구하여 계산해 {(input - 평균) / 표준편차 }에 가중치를 곱한값.
+        '''
         mean = K.mean(inputs, axis=-1, keepdims=True)
         variance = K.mean(K.square(inputs - mean), axis=-1, keepdims=True)
         std = K.sqrt(variance + self.epsilon)
@@ -225,7 +235,6 @@ def _encoder(filter_number, filter_size, depth, drop_rate, ker_regul, bias_regul
                    )(e)
         e = MaxPooling1D(2, padding = padding)(e)
     return(e)
-
 
 def _transformer(drop_rate, width, name, inpC):
     ' Returns a transformer block containing one addetive attention and one feed  forward layer with residual connections '

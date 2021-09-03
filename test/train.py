@@ -3,12 +3,11 @@ from tensorflow.keras.layers import Input
 from tensorflow import keras
 import os
 
-from data_processing import data_processing
+from data_fetch import data_fetch
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from utils import _encoder, _block_CNN_1, _block_BiLSTM, cred2
-
 
 def trainer(input_hdf5=None,
             input_csv=None,
@@ -82,7 +81,7 @@ def trainer(input_hdf5=None,
 
     model = _build_model(args)
 
-    X_train, y_train, X_valid, y_valid, X_test, y_test = data_processing()
+    X_train, y_train, X_valid, y_valid, X_test, y_test = data_fetch('test_STEAD')
     history = model.fit(X_train, y_train, epochs=1,
                         validation_data=(X_valid, y_valid))
 

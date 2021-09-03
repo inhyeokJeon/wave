@@ -1,5 +1,10 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
 import os
 import pickle
+import shutil
+
 import h5py
 import pandas as pd
 import numpy as np
@@ -7,8 +12,9 @@ import matplotlib.pyplot as plt
 from tqdm.notebook import tqdm
 
 DIR = os.getcwd()
-data_path_chunk1 = os.path.join(DIR, '../data_set/chunk1')
-data_path_chunk2 = os.path.join(DIR, '../data_set/chunk2')
+
+data_path_chunk1 = os.path.join(DIR, 'data/chunk1')
+data_path_chunk2 = os.path.join(DIR, 'data/chunk2')
 
 
 def preprocessing(params):
@@ -19,20 +25,14 @@ def preprocessing(params):
     imbalance ->  bool
     '''
 
-    if not params['imbalance']:
-        t_count = 10000
-        f_count = 10000
-    else:
-        t_count = 1000
-        f_count = 9000
-
     window_size = 6000 // params['window_count']
+    print(os.path.join(DIR, 'labeled_dump_STEAD', params['file_name']))
+    print(os.path.isfile(os.path.join(DIR, 'labeled_dump_STEAD', params['file_name'])))
 
     if os.path.isfile(os.path.join(DIR, 'labeled_dump_STEAD', params['file_name'])):
-
         print('file exist!!!')
         return
-
+    else :
         file_name = "chunk2.hdf5"
         csv_file = "chunk2.csv"
 
@@ -51,7 +51,7 @@ def preprocessing(params):
         print(f'total events selected: {len(df)}')
 
         # making a list of trace names for the selected data
-        random_idx = np.random.choice(len(df), 10000)
+        random_idx = np.random.choice(len(df), 15000)
         ev_list = df['trace_name'].to_numpy()[random_idx]
         print('random choice length :', len(ev_list))
 
@@ -91,7 +91,7 @@ def preprocessing(params):
         print(f'total events selected: {len(df)}')
 
         # making a list of trace names for the selected data
-        random_idx = np.random.choice(len(ev_list), 10000)
+        random_idx = np.random.choice(len(ev_list), 5000)
         ev_list = df['trace_name'].to_numpy()[random_idx]
         print('random choice length :', len(ev_list))
 
@@ -112,14 +112,13 @@ def preprocessing(params):
                 'p_time_label': p_time_label,
                 's_time_label': s_time_label
             })
-
+        print("hello")
         with open(os.path.join(DIR, 'labeled_dump_STEAD', params['file_name']), 'wb') as f:
             pickle.dump(outputs, f)
 
-params = {
-    'window_count' : 6000,
-    'file_name' : "window_6000_True",
-    'imbalance' : True
-}
 
-preprocessing(params)
+
+
+
+
+
