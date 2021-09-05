@@ -4,17 +4,19 @@ from tensorflow import keras
 import os
 
 from data_fetch import data_fetch
+from datetime import datetime
+import tensorflow as tf
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-from utils import _encoder, _block_CNN_1, _block_BiLSTM, cred2
+from utils import cred2
 
 def trainer(input_hdf5=None,
             input_csv=None,
             output_name=None,
             input_dimention=(6000, 3),
-            cnn_blocks=5,
-            lstm_blocks=2,
+            cnn_blocks=5, # 5
+            lstm_blocks=2, # 2
             padding='same',
             activation = 'relu',
             drop_rate=0.1,
@@ -81,9 +83,21 @@ def trainer(input_hdf5=None,
 
     model = _build_model(args)
 
+    logs = os.path.join(os.curdir, "my_logs",
+                        "run_" + datetime.now().strftime("%Y%m%d_%H%M%S"))
+
+    tensorboard_cb = tf.keras.callbacks.TensorBoard(
+        log_dir=logs, histogram_freq=1, profile_batch=10)
+
     X_train, y_train, X_valid, y_valid, X_test, y_test = data_fetch('test_STEAD')
-    history = model.fit(X_train, y_train, epochs=1,
-                        validation_data=(X_valid, y_valid))
+    
+    history = model.fit(X_train, y_train, epochs=10,
+                        validation_data=(X_valid, y_valid), callbacks=[tensorboard_cb])
+
+    save_dir = os.path.join(os.getcwd(), 'test_trainer' + '_outputs')
+
+    np.save(save_dir + '/history', history)
+    model.save(save_dir + '/final_model.h5')
 
 def _build_model(args):
     inp = Input((6000,3), name='input')
@@ -103,12 +117,11 @@ def _build_model(args):
     model.summary()
     return model
 
-
 trainer(input_hdf5='../ModelsAndSampleData/100samples.hdf5',
         input_csv='../ModelsAndSampleData/100samples.csv',
         output_name='test_trainer',
         cnn_blocks=2,
-        lstm_blocks=1,
+        lstm_blocks=3,
         padding='same',
         activation='relu',
         drop_rate=0.2,

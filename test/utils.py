@@ -1,4 +1,4 @@
-import tensorflow as tf
+
 
 from tensorflow import keras
 from tensorflow.keras import backend as K
@@ -275,7 +275,6 @@ class cred2():
         Activation funciton type.
     endcoder_depth: int
         The number of layers in the encoder.
-
     decoder_depth: int
         The number of layers in the decoder.
     cnn_blocks: int
@@ -306,13 +305,13 @@ class cred2():
                  kernel_size=[11, 9, 7, 7, 5, 5, 3, 3],
                  padding='same',
                  activationf='relu',
-                 endcoder_depth=7,
-                 decoder_depth=7,
-                 cnn_blocks=5,
-                 BiLSTM_blocks=3,
+                 endcoder_depth=7,# 7
+                 decoder_depth=7, # 7
+                 cnn_blocks=5, # original 5
+                 BiLSTM_blocks=3, #  original 3
                  drop_rate=0.1,
-                 loss_weights=[0.2, 0.3, 0.5],
-                 loss_types=['binary_crossentropy', 'binary_crossentropy', 'binary_crossentropy'],
+                 loss_weights=[0.3],
+                 loss_types=['binary_crossentropy'],
                  kernel_regularizer=keras.regularizers.l1(1e-4),
                  bias_regularizer=keras.regularizers.l1(1e-4),
                  ):

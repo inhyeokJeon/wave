@@ -44,8 +44,9 @@ def _split(args, save_dir):
     test = ev_list[
            int(args['train_valid_test_split'][0] * len(ev_list) + args['train_valid_test_split'][1] * len(ev_list)):]
     # todo
-    #np.save(save_dir + '/test', test)
-    return training, validation, test
+
+    np.save(save_dir + '/test', test)
+    return training, validation
 
 def _make_dir(output_name):
     """
@@ -513,7 +514,7 @@ def main():
     }
     print("HH")
     save_dir, save_models = _make_dir(args['output_name'])
-    training, validation, test = _split(args, save_dir)
+    training, validation = _split(args, save_dir)
     X_train, y2_train= data_reader(list_IDs=training,
                                 file_name=str(args['input_hdf5']),
                                 dim=args['input_dimention'][0],
@@ -543,7 +544,7 @@ def main():
                                     drop_channe_r=args['drop_channel_r'],
                                     scale_amplitude_r=args['scale_amplitude_r'],
                                     pre_emphasis=args['pre_emphasis'])
-
+    '''
     X_test, y2_test = data_reader(list_IDs=test,
                                 file_name=str(args['input_hdf5']),
                                 dim=args['input_dimention'][0],
@@ -558,10 +559,12 @@ def main():
                                 drop_channe_r=args['drop_channel_r'],
                                 scale_amplitude_r=args['scale_amplitude_r'],
                                 pre_emphasis=args['pre_emphasis'])
+    '''
+
 
     DIR = os.getcwd()
-    for name, var in [['Sample_X_train', X_train], ['Sample_p_train',y2_train],['Sample_X_val',X_val],['Sample_p_val',y2_val]
-        ,['Sample_X_test', X_test], ['Sample_p_test',y2_test]]:
+    for name, var in [['Sample_X_train', X_train], ['Sample_p_train',y2_train],['Sample_X_val',X_val],['Sample_p_val',y2_val]]:
+        #,['Sample_X_test', X_test], ['Sample_p_test',y2_test]]:
         with open(os.path.join(DIR, 'test_STEAD', name), 'wb') as f:
             pickle.dump(var, f)
 
