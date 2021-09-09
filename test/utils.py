@@ -59,48 +59,42 @@ def _lr_schedule(epoch):
     print('Learning rate: ', lr)
     return lr
 
+def recall(y_true, y_pred):
+    'Recall metric. Only computes a batch-wise average of recall. Computes the recall, a metric for multi-label classification of how many relevant items are selected.'
+
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    recall = true_positives / (possible_positives + K.epsilon())
+    return recall
+
+
+def precision(y_true, y_pred):
+    'Precision metric. Only computes a batch-wise average of precision. Computes the precision, a metric for multi-label classification of how many selected items are relevant.'
+
+    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
+    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    precision = true_positives / (predicted_positives + K.epsilon())
+    return precision
+
+
 def f1(y_true, y_pred):
-
     """
-
     Calculate F1-score.
-
     Parameters
     ----------
     y_true : 1D array
         Ground truth labels.
-
     y_pred : 1D array
         Predicted labels.
-
     Returns
     -------
     f1 : float
         Calculated F1-score.
-
     """
 
-    def recall(y_true, y_pred):
-        'Recall metric. Only computes a batch-wise average of recall. Computes the recall, a metric for multi-label classification of how many relevant items are selected.'
-
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
-        recall = true_positives / (possible_positives + K.epsilon())
-        return recall
-
-    def precision(y_true, y_pred):
-        'Precision metric. Only computes a batch-wise average of precision. Computes the precision, a metric for multi-label classification of how many selected items are relevant.'
-
-        true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-        predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
-        precision = true_positives / (predicted_positives + K.epsilon())
-        return precision
-
-    precision = precision(y_true, y_pred)
-    recall = recall(y_true, y_pred)
-    return 2* ((precision * recall) / (precision + recall + K.epsilon()))
-
-
+    _precision = precision(y_true, y_pred)
+    _recall = recall(y_true, y_pred)
+    return 2 * ((_precision * _recall) / (_precision + _recall + K.epsilon()))
 
 
 def _decoder(filter_number, filter_size, depth, drop_rate, ker_regul, bias_regul, activation, padding, inpC):
@@ -117,7 +111,7 @@ def _decoder(filter_number, filter_size, depth, drop_rate, ker_regul, bias_regul
                    kernel_regularizer = ker_regul,
                    bias_regularizer = bias_regul,
                    )(d)
-    return(d)
+    return d
 
 
 class LayerNormalization(keras.layers.Layer):
@@ -347,19 +341,21 @@ class cred2():
             x = _block_CNN_1(self.nb_filters[6], 3, self.drop_rate, self.activationf, self.padding, x)
             if cb > 2:
                 x = _block_CNN_1(self.nb_filters[6], 2, self.drop_rate, self.activationf, self.padding, x)
-
+        '''
         for bb in range(self.BiLSTM_blocks):
             x = _block_BiLSTM(self.nb_filters[1], self.drop_rate, self.padding, x)
-
+        
         x, weightdD0 = _transformer(self.drop_rate, None, 'attentionD0', x)
+        
         encoded, weightdD = _transformer(self.drop_rate, None, 'attentionD', x)
-
+        '''
         PLSTM = LSTM(self.nb_filters[1], return_sequences=True, dropout=self.drop_rate,
-                     recurrent_dropout=self.drop_rate)(encoded)
+                     recurrent_dropout=self.drop_rate)(x) # encoded
+        
         norm_layerP, weightdP = SeqSelfAttention(return_attention=True,
                                                  attention_width=3,
                                                  name='attentionP')(PLSTM)
-
+        
         decoder_P = _decoder([i for i in reversed(self.nb_filters)],
                              [i for i in reversed(self.kernel_size)],
                              self.decoder_depth,
@@ -375,7 +371,7 @@ class cred2():
         model = Model(inputs=inp, outputs=[P])
 
         model.compile(loss=self.loss_types, loss_weights=self.loss_weights,
-                      optimizer=Adam(lr=_lr_schedule(0)), metrics=[f1])
+                      optimizer=Adam(lr=_lr_schedule(0)), metrics=["accuracy", precision, recall, f1])
 
         return model
 

@@ -1,4 +1,5 @@
 import numpy as np
+from matplotlib import pyplot as plt
 from tensorflow.keras.layers import Input
 from tensorflow import keras
 import os
@@ -6,10 +7,26 @@ import os
 from data_fetch import data_fetch
 from datetime import datetime
 import tensorflow as tf
+import pandas as pd
+
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 from utils import cred2
+
+# 그림을 저장할 위치
+PROJECT_ROOT_DIR = "."
+CHAPTER_ID = "ann"
+IMAGES_PATH = os.path.join(PROJECT_ROOT_DIR, "images", CHAPTER_ID)
+os.makedirs(IMAGES_PATH, exist_ok=True)
+
+def save_fig(fig_id, tight_layout=True, fig_extension="png", resolution=300):
+    path = os.path.join(IMAGES_PATH, fig_id + "." + fig_extension)
+    print("그림 저장:", fig_id)
+    if tight_layout:
+        plt.tight_layout()
+    plt.savefig(path, format=fig_extension, dpi=resolution)
+
 
 def trainer(input_hdf5=None,
             input_csv=None,
@@ -88,15 +105,28 @@ def trainer(input_hdf5=None,
 
     tensorboard_cb = tf.keras.callbacks.TensorBoard(
         log_dir=logs, histogram_freq=1, profile_batch=10)
+    X_train, y_train, X_valid, y_valid = data_fetch('test_6000_data')
+    #-------------------------------------------------------------
+    #X_train, y_train, X_valid, y_valid = data_fetch('test_STEAD')
+    # -------------------------------------------------------------
+    # checkpoint
+    checkpoint_cb = keras.callbacks.ModelCheckpoint("my_keras_model.h5", save_best_only=True)
+    # early stopping
+    early_stopping_cb = keras.callbacks.EarlyStopping(patience=10,
+                                                      restore_best_weights=True)
 
-    X_train, y_train, X_valid, y_valid, X_test, y_test = data_fetch('test_STEAD')
-    
-    history = model.fit(X_train, y_train, epochs=10,
-                        validation_data=(X_valid, y_valid), callbacks=[tensorboard_cb])
+    history = model.fit(X_train, y_train, epochs=100,
+                        validation_data=(X_valid, y_valid), callbacks=[checkpoint_cb,early_stopping_cb,  tensorboard_cb])
 
     save_dir = os.path.join(os.getcwd(), 'test_trainer' + '_outputs')
 
-    np.save(save_dir + '/history', history)
+    pd.DataFrame(history.history).plot(figsize=(8, 5))
+    plt.grid(True)
+    plt.gca().set_ylim(0, 1)
+    save_fig("keras_learning_curves_plot")
+    plt.show()
+
+    # np.save(save_dir + '/history', history)
     model.save(save_dir + '/final_model.h5')
 
 def _build_model(args):
@@ -120,11 +150,11 @@ def _build_model(args):
 trainer(input_hdf5='../ModelsAndSampleData/100samples.hdf5',
         input_csv='../ModelsAndSampleData/100samples.csv',
         output_name='test_trainer',
-        cnn_blocks=2,
-        lstm_blocks=3,
+        cnn_blocks=1,
+        lstm_blocks=1,
         padding='same',
         activation='relu',
-        drop_rate=0.2,
+        drop_rate=0.2, # 0.2
         label_type='gaussian',
         add_event_r=0.6,
         add_gap_r=0.2,

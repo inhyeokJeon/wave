@@ -33,10 +33,27 @@ def _split(args, save_dir):
 
     """
 
+    '''
+    # 원래꺼
     df = pd.read_csv(args['input_csv'])
-
+    
     ev_list = df.trace_name.tolist()
     np.random.shuffle(ev_list)
+    
+    '''
+    # chunk1,2 합친것에서 noise 2000 개 local 10000개 뽑아서, 섞고 pickle 로 저장했음.
+    df = pd.read_csv(args['input_csv'])
+    df_local = df[(df.trace_category == 'earthquake_local')]
+    df_noise = df[(df.trace_category == 'noise')]
+
+    random_idx = np.random.choice(len(df_local), 10000)
+    ev_list_local = df_local['trace_name'].to_numpy()[random_idx]
+    random_idx = np.random.choice(len(df_noise), 2000)
+    ev_list_noise = df_noise['trace_name'].to_numpy()[random_idx]
+    ev_list = np.concatenate((ev_list_local, ev_list_noise), axis=0)
+
+    np.random.shuffle(ev_list)
+
     training = ev_list[:int(args['train_valid_test_split'][0] * len(ev_list))]
     validation = ev_list[int(args['train_valid_test_split'][0] * len(ev_list)):
                          int(args['train_valid_test_split'][0] * len(ev_list) + args['train_valid_test_split'][1] * len(
@@ -457,7 +474,7 @@ def main():
     shuffle = True
     label_type = 'gaussian'
     normalization_mode = 'std'
-    augmentation = True
+    augmentation = False
     add_event_r = 0.6
     shift_event_r = 0.99
     add_noise_r = 0.3
@@ -479,8 +496,8 @@ def main():
     use_multiprocessing = True
 
     args = {
-        "input_hdf5": 'SampleData/100samples.hdf5',
-        "input_csv": 'SampleData/100samples.csv',
+        "input_hdf5": 'data/merged.hdf5',
+        "input_csv": 'data/merged.csv',
         "output_name": 'test_trainer',
         "input_dimention": input_dimention,
         "cnn_blocks": cnn_blocks,
@@ -515,7 +532,9 @@ def main():
     print("HH")
     save_dir, save_models = _make_dir(args['output_name'])
     training, validation = _split(args, save_dir)
-    X_train, y2_train= data_reader(list_IDs=training,
+    print(len(training))
+
+    X_train, y2_train = data_reader(list_IDs=training,
                                 file_name=str(args['input_hdf5']),
                                 dim=args['input_dimention'][0],
                                 n_channels=args['input_dimention'][-1],
@@ -559,12 +578,13 @@ def main():
                                 drop_channe_r=args['drop_channel_r'],
                                 scale_amplitude_r=args['scale_amplitude_r'],
                                 pre_emphasis=args['pre_emphasis'])
+
     '''
 
-
     DIR = os.getcwd()
+    print(len(X_train))
     for name, var in [['Sample_X_train', X_train], ['Sample_p_train',y2_train],['Sample_X_val',X_val],['Sample_p_val',y2_val]]:
-        #,['Sample_X_test', X_test], ['Sample_p_test',y2_test]]:
+        #['Sample_X_test', X_test], ['Sample_p_test',y2_test]:
         with open(os.path.join(DIR, 'test_STEAD', name), 'wb') as f:
             pickle.dump(var, f)
 
