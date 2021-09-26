@@ -2768,7 +2768,7 @@ class cred2():
                     self.activationf, 
                     self.padding,
                     x)
-        '''
+        
         for cb in range(self.cnn_blocks):
             x = _block_CNN_1(self.nb_filters[6], 3, self.drop_rate, self.activationf, self.padding, x)
             if cb > 2:
@@ -2779,7 +2779,7 @@ class cred2():
 
         x, weightdD0 = _transformer(self.drop_rate, None, 'attentionD0', x)
         encoded, weightdD = _transformer(self.drop_rate, None, 'attentionD', x)
-        '''
+        
         decoder_D = _decoder([i for i in reversed(self.nb_filters)], 
                              [i for i in reversed(self.kernel_size)], 
                              self.decoder_depth, 
@@ -2788,7 +2788,7 @@ class cred2():
                              self.bias_regularizer,
                              self.activationf, 
                              self.padding,                             
-                             x) # todo
+                             encoded) # todo
 
         d = Conv1D(1, 11, padding = self.padding, activation='sigmoid', name='detector')(decoder_D)
 
@@ -2806,7 +2806,7 @@ class cred2():
                             self.bias_regularizer,
                             self.activationf, 
                             self.padding,                            
-                            x) # todo
+                            encoded) # todo
 
         P = Conv1D(1, 11, padding = self.padding, activation='sigmoid', name='picker_P')(decoder_P)
         '''
@@ -2823,17 +2823,17 @@ class cred2():
                             self.bias_regularizer,
                             self.activationf, 
                             self.padding,                            
-                            x) # todo
+                            encoded) # todo
         
         S = Conv1D(1, 11, padding = self.padding, activation='sigmoid', name='picker_S')(decoder_S)
 
         model = Model(inputs=inp, outputs=[d, P, S])
-
+        '''
         model.compile(loss=self.loss_types, loss_weights=self.loss_weights,    
             optimizer=Adam(lr=_lr_schedule(0)), metrics=[f1,'accuracy'])
         '''
         model.compile(loss=self.loss_types, loss_weights=self.loss_weights,
                       optimizer=Nadam(lr=_lr_schedule(0)), metrics=[f1, 'accuracy'])
-        '''
+        
         print("Optimizer adam")
         return model
